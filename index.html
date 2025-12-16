@@ -715,6 +715,7 @@
 
                 mqttClient.on('error', function(error) {
                     addLog('❌ MQTT Error: ' + error.message, 'denied');
+                    console.error('MQTT Error Details:', error);
                     updateMQTTStatus(false);
                     document.getElementById('connectBtn').disabled = false;
                     document.getElementById('disconnectBtn').disabled = true;
@@ -724,6 +725,7 @@
                 mqttClient.on('close', function() {
                     mqttConnected = false;
                     addLog('⚠️ MQTT connection closed', 'denied');
+                    console.log('Connection closed by broker');
                     updateMQTTStatus(false);
                     document.getElementById('connectBtn').disabled = false;
                     document.getElementById('disconnectBtn').disabled = true;
@@ -733,8 +735,13 @@
                 mqttClient.on('offline', function() {
                     mqttConnected = false;
                     addLog('⚠️ MQTT broker offline', 'denied');
+                    console.log('Broker is offline or unreachable');
                     updateMQTTStatus(false);
                     document.getElementById('mqttStatus').textContent = 'Offline';
+                });
+
+                mqttClient.on('end', function() {
+                    console.log('MQTT client ended');
                 });
 
                 mqttClient.on('reconnect', function() {
