@@ -86,6 +86,12 @@
             color: #721c24;
         }
 
+        .status-checking {
+            background: #fff3cd;
+            color: #856404;
+            animation: pulse 1.5s infinite;
+        }
+
         .status-recording {
             background: #fff3cd;
             color: #856404;
@@ -146,12 +152,6 @@
             color: #333;
         }
 
-        .btn-info {
-            background: #17a2b8;
-            color: white;
-        }
-
-        /* AC Control Specific Styles */
         .ac-display {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             padding: 30px;
@@ -249,69 +249,6 @@
             margin: 20px 0;
         }
 
-        .sensor-display {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .sensor-item {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-        }
-
-        .sensor-label {
-            font-size: 0.9em;
-            color: #666;
-            margin-bottom: 5px;
-        }
-
-        .sensor-value {
-            font-size: 2em;
-            font-weight: 700;
-            color: #333;
-        }
-
-        .sensor-unit {
-            font-size: 0.8em;
-            color: #999;
-        }
-
-        .pattern-display {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 15px;
-        }
-
-        .pattern-title {
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #555;
-        }
-
-        .pattern-knocks {
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-        }
-
-        .knock-dot {
-            width: 30px;
-            height: 30px;
-            background: #667eea;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 0.8em;
-            font-weight: 600;
-        }
-
         .access-log {
             background: #f8f9fa;
             padding: 15px;
@@ -378,14 +315,6 @@
             font-size: 0.9em;
         }
 
-        .countdown {
-            font-size: 3em;
-            font-weight: 700;
-            text-align: center;
-            color: #667eea;
-            margin: 20px 0;
-        }
-
         .info-box {
             background: #e7f3ff;
             border: 2px solid #b3d9ff;
@@ -399,13 +328,53 @@
             color: #004085;
             font-size: 0.9em;
         }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .warning-box p {
+            margin: 5px 0;
+            color: #856404;
+            font-size: 0.9em;
+        }
+
+        .connection-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .info-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .info-label {
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #333;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🏠 Smart Home Control System</h1>
-            <p>AC Control, Door Security & Environmental Monitoring</p>
+            <p>ESP32 MQTT Control with Real-time Updates</p>
         </div>
 
         <div class="grid">
@@ -413,29 +382,67 @@
             <div class="card">
                 <div class="card-header">
                     <span class="icon">🔌</span>
-                    <h2>Connection</h2>
+                    <h2>MQTT Connection</h2>
                 </div>
-                
-                <div class="status-badge status-offline" id="mqttStatus">Disconnected</div>
-                <div class="status-badge status-offline" id="espStatus">ESP32 Offline</div>
+
+                <div class="status-badge status-offline" id="espStatus">⚠️ Not Connected</div>
+
+                <div class="warning-box">
+                    <p><strong>ℹ️ MQTT Connection</strong></p>
+                    <p>Click "Connect to MQTT" to establish connection with broker.</p>
+                    <p>ESP32 harus sudah terhubung ke MQTT broker yang sama!</p>
+                </div>
 
                 <div class="config-section">
                     <div class="form-group">
-                        <label>Broker WebSocket</label>
-                        <input type="text" id="broker" value="ws://10.4.67.183" placeholder="ws://broker:port">
+                        <label>MQTT Broker WebSocket URL</label>
+                        <input type="text" id="brokerUrl" value="ws://10.4.67.183:9001" placeholder="ws://broker-ip:9001">
                     </div>
                     <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" id="username" value="kelasc">
+                        <label>Username (optional)</label>
+                        <input type="text" id="mqttUsername" placeholder="Leave empty if no auth">
                     </div>
                     <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" id="password" value="kelasc">
+                        <label>Password (optional)</label>
+                        <input type="password" id="mqttPassword" placeholder="Leave empty if no auth">
                     </div>
                 </div>
 
-                <button class="btn btn-primary" id="connectBtn" onclick="connectMQTT()">Connect to Broker</button>
-                <button class="btn btn-danger" id="disconnectBtn" onclick="disconnectMQTT()" disabled>Disconnect</button>
+                <button class="btn btn-success" onclick="connectMQTT()" id="connectBtn">🔌 Connect to MQTT</button>
+                <button class="btn btn-danger" onclick="disconnectMQTT()" id="disconnectBtn" disabled>🔌 Disconnect</button>
+
+                <div class="connection-info">
+                    <div class="info-item">
+                        <div class="info-label">MQTT Status</div>
+                        <div class="info-value" id="mqttStatus">Disconnected</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">ESP32 Status</div>
+                        <div class="info-value" id="esp32Status">Unknown</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Last Update</div>
+                        <div class="info-value" id="lastCheck">Never</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Commands Sent</div>
+                        <div class="info-value" id="cmdCount">0</div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <p><strong>📡 MQTT Topics:</strong></p>
+                    <p style="font-family: monospace; font-size: 0.8em;">
+                        AC1 → Set in AC Unit 1 card<br>
+                        AC2 → Set in AC Unit 2 card<br>
+                        Door → Set in Door Control card<br>
+                        Knock → Set in Knock Pattern card
+                    </p>
+                    <p style="margin-top: 10px;"><strong>Subscribe topics (status):</strong></p>
+                    <p style="font-family: monospace; font-size: 0.8em;">
+                        ESP32 Status: c/5027241027/rumah/status
+                    </p>
+                </div>
             </div>
 
             <!-- AC Unit 1 -->
@@ -443,6 +450,13 @@
                 <div class="card-header">
                     <span class="icon">❄️</span>
                     <h2>AC Unit 1</h2>
+                </div>
+
+                <div class="config-section" style="margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label>MQTT Topic</label>
+                        <input type="text" id="ac1Topic" value="c/5027241027/rumah/ac/command" placeholder="Enter AC1 topic">
+                    </div>
                 </div>
 
                 <div class="ac-display" id="ac1Display">
@@ -456,13 +470,13 @@
                     <button class="control-btn btn-power" id="ac1Power" onclick="toggleAC(1)" disabled>
                         <span id="ac1PowerText">⚡ POWER</span>
                     </button>
-                    <button class="control-btn btn-temp-down" onclick="tempDown(1)" disabled id="ac1TempDown">
+                    <button class="control-btn btn-temp-down" onclick="tempDown(1)" id="ac1TempDown" disabled>
                         ❄️ -
                     </button>
                     <button class="control-btn" style="background:#95a5a6;cursor:default;" disabled>
                         TEMP
                     </button>
-                    <button class="control-btn btn-temp-up" onclick="tempUp(1)" disabled id="ac1TempUp">
+                    <button class="control-btn btn-temp-up" onclick="tempUp(1)" id="ac1TempUp" disabled>
                         🔥 +
                     </button>
                 </div>
@@ -473,6 +487,13 @@
                 <div class="card-header">
                     <span class="icon">❄️</span>
                     <h2>AC Unit 2</h2>
+                </div>
+
+                <div class="config-section" style="margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label>MQTT Topic</label>
+                        <input type="text" id="ac2Topic" value="c/5027241027/rumah/ac/command" placeholder="Enter AC2 topic">
+                    </div>
                 </div>
 
                 <div class="ac-display" id="ac2Display">
@@ -486,13 +507,13 @@
                     <button class="control-btn btn-power" id="ac2Power" onclick="toggleAC(2)" disabled>
                         <span id="ac2PowerText">⚡ POWER</span>
                     </button>
-                    <button class="control-btn btn-temp-down" onclick="tempDown(2)" disabled id="ac2TempDown">
+                    <button class="control-btn btn-temp-down" onclick="tempDown(2)" id="ac2TempDown" disabled>
                         ❄️ -
                     </button>
                     <button class="control-btn" style="background:#95a5a6;cursor:default;" disabled>
                         TEMP
                     </button>
-                    <button class="control-btn btn-temp-up" onclick="tempUp(2)" disabled id="ac2TempUp">
+                    <button class="control-btn btn-temp-up" onclick="tempUp(2)" id="ac2TempUp" disabled>
                         🔥 +
                     </button>
                 </div>
@@ -503,6 +524,13 @@
                 <div class="card-header">
                     <span class="icon">🚪</span>
                     <h2>Door Control</h2>
+                </div>
+
+                <div class="config-section" style="margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label>MQTT Topic</label>
+                        <input type="text" id="doorTopic" value="c/5027241027/rumah/door/command" placeholder="Enter Door topic">
+                    </div>
                 </div>
 
                 <div class="door-control">
@@ -521,12 +549,14 @@
                     <h2>Knock Pattern</h2>
                 </div>
 
-                <div class="status-badge status-offline" id="modeStatus">Idle</div>
-
-                <div id="countdownDisplay" style="display:none;">
-                    <div class="countdown" id="countdown">3</div>
-                    <p style="text-align:center; color:#666; font-weight:600;">Knock your pattern now!</p>
+                <div class="config-section" style="margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label>MQTT Topic</label>
+                        <input type="text" id="knockTopic" value="c/5027241027/rumah/command" placeholder="Enter Knock topic">
+                    </div>
                 </div>
+
+                <div class="status-badge status-offline" id="modeStatus">Ready</div>
 
                 <button class="btn btn-warning" id="recordBtn" onclick="recordPattern()" disabled>
                     🎙️ Record New Pattern
@@ -538,53 +568,17 @@
                     ⏹️ Stop Listening
                 </button>
 
-                <div class="pattern-display" id="patternDisplay" style="display:none;">
-                    <div class="pattern-title">Saved Pattern:</div>
-                    <div class="pattern-knocks" id="patternKnocks"></div>
-                    <p style="margin-top:10px; font-size:0.9em; color:#666;">
-                        <span id="patternCount">0</span> knocks recorded
-                    </p>
-                </div>
-
                 <div class="info-box">
                     <p><strong>How to use:</strong></p>
-                    <p>1. Click "Record New Pattern"</p>
-                    <p>2. Knock your secret pattern within 3 seconds</p>
-                    <p>3. Click "Start Listening Mode"</p>
-                    <p>4. Knock the same pattern to unlock</p>
+                    <p>1. Connect to MQTT broker first</p>
+                    <p>2. Click "Record New Pattern"</p>
+                    <p>3. Knock your pattern on piezo sensor</p>
+                    <p>4. Click "Start Listening Mode"</p>
+                    <p>5. Knock to unlock door</p>
                 </div>
             </div>
 
-            <!-- Temperature & Humidity Card -->
-            <div class="card">
-                <div class="card-header">
-                    <span class="icon">🌡️</span>
-                    <h2>Environment Monitor</h2>
-                </div>
-
-                <div class="sensor-display">
-                    <div class="sensor-item">
-                        <div class="sensor-label">Temperature</div>
-                        <div class="sensor-value">
-                            <span id="temperature">--</span>
-                            <span class="sensor-unit">°C</span>
-                        </div>
-                    </div>
-                    <div class="sensor-item">
-                        <div class="sensor-label">Humidity</div>
-                        <div class="sensor-value">
-                            <span id="humidity">--</span>
-                            <span class="sensor-unit">%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <p style="margin-top:15px; color:#666; font-size:0.9em; text-align:center;">
-                    Last update: <span id="lastUpdate">Never</span>
-                </p>
-            </div>
-
-            <!-- Access Log Card -->
+            <!-- System Log Card -->
             <div class="card">
                 <div class="card-header">
                     <span class="icon">📋</span>
@@ -593,59 +587,323 @@
 
                 <div class="access-log" id="accessLog">
                     <div class="log-entry log-info">
-                        <div>System initialized</div>
-                        <div class="log-time">Waiting for events...</div>
+                        <div>System initialized - Ready to connect</div>
+                        <div class="log-time">Waiting for MQTT connection...</div>
                     </div>
+                </div>
+
+                <div class="info-box" style="margin-top: 15px;">
+                    <p><strong>💡 Setup Instructions:</strong></p>
+                    <p>1. <strong>Mosquitto WebSocket Setup:</strong></p>
+                    <p style="font-family: monospace; font-size: 0.85em; margin-left: 15px;">
+                        # mosquitto.conf<br>
+                        listener 1883<br>
+                        protocol mqtt<br>
+                        allow_anonymous true<br>
+                        <br>
+                        listener 9001<br>
+                        protocol websockets<br>
+                        allow_anonymous true
+                    </p>
+                    <p>2. Run: <code>mosquitto -c mosquitto.conf -v</code></p>
+                    <p>3. If using auth, add username/password above</p>
+                    <p>4. ESP32 must publish to /status topic</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
-    <script>
-        let client = null;
-        let isConnected = false;
-        let countdownInterval = null;
+    <!-- MQTT.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
 
-        // AC State (will be synced with ESP32)
+    <script>
+        // MQTT Configuration
+        let mqttClient = null;
+        let mqttConnected = false;
+        
+        // AC State (local tracking)
         let ac1 = { power: false, temp: 24 };
         let ac2 = { power: false, temp: 24 };
+        let espOnline = false;
+        let commandCount = 0;
+        let reconnectAttempts = 0;
+        const MAX_RECONNECT_ATTEMPTS = 5;
 
-        function updateMQTTStatus(connected) {
-            const statusEl = document.getElementById('mqttStatus');
-            if (connected) {
-                statusEl.textContent = '✅ Connected to Broker';
-                statusEl.className = 'status-badge status-online';
-            } else {
-                statusEl.textContent = '❌ Disconnected';
-                statusEl.className = 'status-badge status-offline';
+        function addLog(message, type = 'info') {
+            const logDiv = document.getElementById('accessLog');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            
+            const time = new Date().toLocaleTimeString('id-ID');
+            entry.innerHTML = `
+                <div>${message}</div>
+                <div class="log-time">${time}</div>
+            `;
+            
+            logDiv.insertBefore(entry, logDiv.firstChild);
+            
+            while (logDiv.children.length > 15) {
+                logDiv.removeChild(logDiv.lastChild);
             }
         }
 
-        function updateESPStatus(online) {
+        // MQTT Connection Functions
+        function connectMQTT() {
+            const brokerUrl = document.getElementById('brokerUrl').value;
+            const username = document.getElementById('mqttUsername').value;
+            const password = document.getElementById('mqttPassword').value;
+            
+            if (!brokerUrl || !brokerUrl.startsWith('ws://')) {
+                alert('Masukkan MQTT Broker WebSocket URL yang valid!\nContoh: ws://10.4.67.183:9001');
+                return;
+            }
+
+            try {
+                addLog('🔌 Connecting to MQTT broker...', 'info');
+                document.getElementById('connectBtn').disabled = true;
+                
+                const options = {
+                    clientId: 'smart_home_web_' + Math.random().toString(16).substr(2, 8),
+                    clean: true,
+                    connectTimeout: 4000,
+                    reconnectPeriod: 1000
+                };
+                
+                // Add credentials if provided
+                if (username) {
+                    options.username = username;
+                    addLog('Using username: ' + username, 'info');
+                }
+                if (password) {
+                    options.password = password;
+                    addLog('Password provided', 'info');
+                }
+                
+                mqttClient = mqtt.connect(brokerUrl, options);
+
+                mqttClient.on('connect', function() {
+                    mqttConnected = true;
+                    reconnectAttempts = 0;
+                    addLog('✅ Connected to MQTT broker', 'granted');
+                    updateMQTTStatus(true);
+                    document.getElementById('connectBtn').disabled = true;
+                    document.getElementById('disconnectBtn').disabled = false;
+                    document.getElementById('mqttStatus').textContent = 'Connected';
+                    
+                    // Subscribe to all ESP32 topics
+                    mqttClient.subscribe('c/5027241027/rumah/status', (err) => {
+                        if (!err) addLog('📥 Subscribed to status', 'info');
+                    });
+                    mqttClient.subscribe('c/5027241027/rumah/ac/status', (err) => {
+                        if (!err) addLog('📥 Subscribed to AC status', 'info');
+                    });
+                    mqttClient.subscribe('c/5027241027/rumah/door/status', (err) => {
+                        if (!err) addLog('📥 Subscribed to door status', 'info');
+                    });
+                    mqttClient.subscribe('c/5027241027/rumah/knock', (err) => {
+                        if (!err) addLog('📥 Subscribed to knock status', 'info');
+                    });
+                    mqttClient.subscribe('c/5027241027/rumah/suhu', (err) => {
+                        if (!err) addLog('📥 Subscribed to temperature', 'info');
+                    });
+                });
+
+                mqttClient.on('message', function(topic, message) {
+                    handleMQTTMessage(topic, message.toString());
+                });
+
+                mqttClient.on('error', function(error) {
+                    addLog('❌ MQTT Error: ' + error.message, 'denied');
+                    updateMQTTStatus(false);
+                    document.getElementById('connectBtn').disabled = false;
+                    document.getElementById('disconnectBtn').disabled = true;
+                    document.getElementById('mqttStatus').textContent = 'Error';
+                });
+
+                mqttClient.on('close', function() {
+                    mqttConnected = false;
+                    addLog('⚠️ MQTT connection closed', 'denied');
+                    updateMQTTStatus(false);
+                    document.getElementById('connectBtn').disabled = false;
+                    document.getElementById('disconnectBtn').disabled = true;
+                    document.getElementById('mqttStatus').textContent = 'Disconnected';
+                });
+
+                mqttClient.on('offline', function() {
+                    mqttConnected = false;
+                    addLog('⚠️ MQTT broker offline', 'denied');
+                    updateMQTTStatus(false);
+                    document.getElementById('mqttStatus').textContent = 'Offline';
+                });
+
+                mqttClient.on('reconnect', function() {
+                    reconnectAttempts++;
+                    if (reconnectAttempts <= MAX_RECONNECT_ATTEMPTS) {
+                        addLog(`🔄 Reconnecting... (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`, 'info');
+                        document.getElementById('mqttStatus').textContent = 'Reconnecting...';
+                    }
+                });
+
+            } catch (error) {
+                addLog('❌ Failed to connect: ' + error.message, 'denied');
+                updateMQTTStatus(false);
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('mqttStatus').textContent = 'Failed';
+            }
+        }
+
+        function disconnectMQTT() {
+            if (mqttClient) {
+                mqttClient.end();
+                mqttClient = null;
+                mqttConnected = false;
+                updateMQTTStatus(false);
+                addLog('🔌 Disconnected from MQTT broker', 'info');
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('disconnectBtn').disabled = true;
+                document.getElementById('mqttStatus').textContent = 'Disconnected';
+            }
+        }
+
+        function updateMQTTStatus(connected) {
+            mqttConnected = connected;
             const statusEl = document.getElementById('espStatus');
+            
+            if (connected) {
+                statusEl.textContent = '✅ MQTT Connected - Waiting for ESP32';
+                statusEl.className = 'status-badge status-online';
+            } else {
+                statusEl.textContent = '❌ MQTT Disconnected';
+                statusEl.className = 'status-badge status-offline';
+                espOnline = false;
+                disableAllControls();
+                document.getElementById('esp32Status').textContent = 'Unknown';
+            }
+            
+            document.getElementById('lastCheck').textContent = new Date().toLocaleTimeString('id-ID');
+        }
+
+        function handleMQTTMessage(topic, message) {
+            addLog(`📩 ${topic.split('/').pop()}`, 'info');
+            
+            try {
+                const payload = JSON.parse(message);
+                
+                // ESP32 Status - {"status":"online"}
+                if (topic === 'c/5027241027/rumah/status') {
+                    if (payload.status === 'online') {
+                        updateESPStatus(true, 'ESP32 online');
+                        document.getElementById('esp32Status').textContent = 'Online';
+                    } else if (payload.mode) {
+                        // Knock mode status
+                        const modeStatus = document.getElementById('modeStatus');
+                        if (payload.mode === 'recording') {
+                            modeStatus.textContent = '🔴 Recording...';
+                            modeStatus.className = 'status-badge status-recording';
+                            addLog('🎙️ ESP32 recording pattern', 'info');
+                        } else if (payload.mode === 'listening') {
+                            modeStatus.textContent = '👂 Listening...';
+                            modeStatus.className = 'status-badge status-listening';
+                            document.getElementById('stopBtn').disabled = false;
+                            document.getElementById('listenBtn').disabled = true;
+                            addLog('👂 ESP32 listening for knocks', 'info');
+                        } else if (payload.mode === 'idle' || payload.mode === 'pattern_saved') {
+                            modeStatus.textContent = 'Ready';
+                            modeStatus.className = 'status-badge status-offline';
+                            document.getElementById('stopBtn').disabled = true;
+                            if (espOnline) document.getElementById('listenBtn').disabled = false;
+                            if (payload.mode === 'pattern_saved') {
+                                addLog('✅ Pattern saved successfully', 'granted');
+                            }
+                        }
+                    }
+                }
+                
+                // AC Status - {"unit":1,"power":true,"temp":24}
+                else if (topic === 'c/5027241027/rumah/ac/status') {
+                    if (payload.unit === 1) {
+                        ac1.power = payload.power;
+                        ac1.temp = payload.temp;
+                        updateACDisplay(1);
+                        addLog(`AC 1: ${payload.power ? 'ON' : 'OFF'} ${payload.temp}°C`, 'info');
+                    } else if (payload.unit === 2) {
+                        ac2.power = payload.power;
+                        ac2.temp = payload.temp;
+                        updateACDisplay(2);
+                        addLog(`AC 2: ${payload.power ? 'ON' : 'OFF'} ${payload.temp}°C`, 'info');
+                    }
+                }
+                
+                // Door Status - {"status":"open"} or {"status":"closed"}
+                else if (topic === 'c/5027241027/rumah/door/status') {
+                    const doorIcon = document.getElementById('doorIcon');
+                    const doorStatus = document.getElementById('doorStatus');
+                    
+                    if (payload.status === 'open') {
+                        doorIcon.textContent = '🔓';
+                        doorStatus.textContent = 'UNLOCKED';
+                        addLog('🚪 Door opened', 'granted');
+                    } else if (payload.status === 'closed') {
+                        doorIcon.textContent = '🔒';
+                        doorStatus.textContent = 'LOCKED';
+                        addLog('🚪 Door locked', 'info');
+                    }
+                }
+                
+                // Knock Pattern - {"matched":true/false,"action":"..."}
+                else if (topic === 'c/5027241027/rumah/knock') {
+                    if (payload.matched !== undefined) {
+                        if (payload.matched) {
+                            addLog('✅ Knock pattern MATCHED!', 'granted');
+                        } else {
+                            addLog('❌ Knock pattern FAILED', 'denied');
+                        }
+                    } else if (payload.pattern) {
+                        addLog(`✅ Pattern recorded: ${payload.count} knocks`, 'granted');
+                    } else if (payload.error) {
+                        addLog(`❌ Recording error: ${payload.error}`, 'denied');
+                    }
+                }
+                
+                // Temperature/Humidity - {"temperature":24.8,"humidity":69.0}
+                else if (topic === 'c/5027241027/rumah/suhu') {
+                    addLog(`🌡️ ${payload.temperature}°C, 💧 ${payload.humidity}%`, 'info');
+                }
+                
+            } catch (e) {
+                // Plain text message
+                addLog(`   ${message}`, 'info');
+            }
+        }
+
+        function updateESPStatus(online, reason = '') {
+            espOnline = online;
+            const statusEl = document.getElementById('espStatus');
+            
             if (online) {
                 statusEl.textContent = '✅ ESP32 Online';
                 statusEl.className = 'status-badge status-online';
-                
-                // Enable all control buttons
                 enableAllControls();
+                addLog('ESP32 is online' + (reason ? ': ' + reason : ''), 'granted');
             } else {
-                statusEl.textContent = '❌ ESP32 Offline';
+                statusEl.textContent = '⚠️ ESP32 Offline';
                 statusEl.className = 'status-badge status-offline';
-                
-                // Disable all control buttons except connect
                 disableAllControls();
+                addLog('ESP32 is offline' + (reason ? ': ' + reason : ''), 'denied');
             }
+            
+            document.getElementById('lastCheck').textContent = new Date().toLocaleTimeString('id-ID');
         }
 
         function enableAllControls() {
+            if (!mqttConnected) return;
+            
             document.getElementById('ac1Power').disabled = false;
             document.getElementById('ac2Power').disabled = false;
             document.getElementById('doorBtn').disabled = false;
             document.getElementById('recordBtn').disabled = false;
+            document.getElementById('listenBtn').disabled = false;
             
-            // Enable temp controls if AC is on
             if (ac1.power) {
                 document.getElementById('ac1TempDown').disabled = false;
                 document.getElementById('ac1TempUp').disabled = false;
@@ -669,36 +927,33 @@
             document.getElementById('stopBtn').disabled = true;
         }
 
-        function updateModeStatus(mode) {
-            const statusEl = document.getElementById('modeStatus');
-            const modes = {
-                'idle': { text: '⚪ Idle', class: 'status-offline' },
-                'recording': { text: '🔴 Recording Pattern...', class: 'status-recording' },
-                'pattern_saved': { text: '✅ Pattern Saved', class: 'status-online' },
-                'listening': { text: '👂 Listening for Knocks...', class: 'status-listening' }
-            };
-            
-            const modeData = modes[mode] || modes['idle'];
-            statusEl.textContent = modeData.text;
-            statusEl.className = 'status-badge ' + modeData.class;
-        }
-
-        function addLog(message, type = 'info') {
-            const logDiv = document.getElementById('accessLog');
-            const entry = document.createElement('div');
-            entry.className = `log-entry log-${type}`;
-            
-            const time = new Date().toLocaleTimeString('id-ID');
-            entry.innerHTML = `
-                <div>${message}</div>
-                <div class="log-time">${time}</div>
-            `;
-            
-            logDiv.insertBefore(entry, logDiv.firstChild);
-            
-            while (logDiv.children.length > 15) {
-                logDiv.removeChild(logDiv.lastChild);
+        function publishMQTT(topic, payload) {
+            if (!mqttConnected) {
+                addLog('⚠️ MQTT not connected! Please connect first.', 'denied');
+                alert('MQTT not connected! Click "Connect to MQTT" button first.');
+                return false;
             }
+
+            if (!espOnline) {
+                addLog('⚠️ ESP32 is offline! Command may not be received.', 'denied');
+                const proceed = confirm('ESP32 appears offline. Send command anyway?');
+                if (!proceed) return false;
+            }
+
+            const command = typeof payload === 'string' ? payload : JSON.stringify(payload);
+            
+            mqttClient.publish(topic, command, { qos: 1 }, (err) => {
+                if (err) {
+                    addLog(`❌ Failed to send: ${err.message}`, 'denied');
+                } else {
+                    commandCount++;
+                    document.getElementById('cmdCount').textContent = commandCount;
+                    addLog(`📤 Sent to: ${topic.split('/').pop()}`, 'granted');
+                    addLog(`   Payload: ${command}`, 'info');
+                }
+            });
+            
+            return true;
         }
 
         function updateACDisplay(unit) {
@@ -715,8 +970,8 @@
                 tempEl.className = 'ac-temp';
                 tempEl.innerHTML = `${ac.temp}<span class="ac-temp-unit">°C</span>`;
                 powerBtn.className = 'control-btn btn-power on';
-                tempDownBtn.disabled = ac.temp <= 16;
-                tempUpBtn.disabled = ac.temp >= 30;
+                tempDownBtn.disabled = ac.temp <= 16 || !espOnline;
+                tempUpBtn.disabled = ac.temp >= 30 || !espOnline;
             } else {
                 statusEl.textContent = 'OFF';
                 statusEl.className = 'ac-status off';
@@ -729,392 +984,122 @@
         }
 
         function toggleAC(unit) {
-            if (!client || !isConnected) {
-                alert('Not connected to broker!');
-                return;
-            }
-            
             const ac = unit === 1 ? ac1 : ac2;
             ac.power = !ac.power;
             
-            // If turning on, set to last temperature (or 24 default)
             if (ac.power && ac.temp === 0) {
                 ac.temp = 24;
             }
             
+            const topic = document.getElementById(`ac${unit}Topic`).value;
             const command = {
                 unit: unit,
                 action: ac.power ? 'power_on' : 'power_off',
                 temp: ac.temp
             };
             
-            const message = new Paho.MQTT.Message(JSON.stringify(command));
-            message.destinationName = 'c/5027241027/rumah/ac/command';
-            client.send(message);
-            
-            updateACDisplay(unit);
-            addLog(`AC ${unit} ${ac.power ? 'turned ON' : 'turned OFF'}`, ac.power ? 'granted' : 'info');
+            if (publishMQTT(topic, command)) {
+                updateACDisplay(unit);
+                addLog(`✅ AC ${unit} ${ac.power ? 'Power ON' : 'Power OFF'} command sent`, ac.power ? 'granted' : 'info');
+            }
         }
 
         function tempUp(unit) {
-            if (!client || !isConnected) return;
-            
             const ac = unit === 1 ? ac1 : ac2;
-            if (!ac.power) return;
-            if (ac.temp >= 30) return;
+            if (!ac.power || ac.temp >= 30) return;
             
             ac.temp++;
             
-            const command = {
+            const topic = document.getElementById(`ac${unit}Topic`).value;
+            if (publishMQTT(topic, {
                 unit: unit,
                 action: 'temp_up',
                 temp: ac.temp
-            };
-            
-            const message = new Paho.MQTT.Message(JSON.stringify(command));
-            message.destinationName = 'c/5027241027/rumah/ac/command';
-            client.send(message);
-            
-            updateACDisplay(unit);
-            addLog(`AC ${unit} temperature increased to ${ac.temp}°C`, 'info');
+            })) {
+                updateACDisplay(unit);
+                addLog(`✅ AC ${unit} temperature → ${ac.temp}°C`, 'info');
+            }
         }
 
         function tempDown(unit) {
-            if (!client || !isConnected) return;
-            
             const ac = unit === 1 ? ac1 : ac2;
-            if (!ac.power) return;
-            if (ac.temp <= 16) return;
+            if (!ac.power || ac.temp <= 16) return;
             
             ac.temp--;
             
-            const command = {
+            const topic = document.getElementById(`ac${unit}Topic`).value;
+            if (publishMQTT(topic, {
                 unit: unit,
                 action: 'temp_down',
                 temp: ac.temp
-            };
-            
-            const message = new Paho.MQTT.Message(JSON.stringify(command));
-            message.destinationName = 'c/5027241027/rumah/ac/command';
-            client.send(message);
-            
-            updateACDisplay(unit);
-            addLog(`AC ${unit} temperature decreased to ${ac.temp}°C`, 'info');
+            })) {
+                updateACDisplay(unit);
+                addLog(`✅ AC ${unit} temperature → ${ac.temp}°C`, 'info');
+            }
         }
 
         function openDoor() {
-            if (!client || !isConnected) {
-                alert('Not connected to broker!');
-                return;
-            }
-            
             const doorIcon = document.getElementById('doorIcon');
             const doorStatus = document.getElementById('doorStatus');
             const doorBtn = document.getElementById('doorBtn');
             
-            // Open door
-            doorIcon.textContent = '🔓';
-            doorStatus.textContent = 'UNLOCKED';
-            doorBtn.disabled = true;
-            
-            const command = { action: 'open' };
-            const message = new Paho.MQTT.Message(JSON.stringify(command));
-            message.destinationName = 'c/5027241027/rumah/door/command';
-            client.send(message);
-            
-            addLog('Door opened manually', 'granted');
-            
-            // Auto close after 2 seconds
-            setTimeout(() => {
-                doorIcon.textContent = '🔒';
-                doorStatus.textContent = 'LOCKED';
-                if (isConnected) {
-                    doorBtn.disabled = false;
-                }
-                
-                const closeCommand = { action: 'close' };
-                const closeMessage = new Paho.MQTT.Message(JSON.stringify(closeCommand));
-                closeMessage.destinationName = 'c/5027241027/rumah/door/command';
-                client.send(closeMessage);
-                
-                addLog('Door auto-locked', 'info');
-            }, 2000);
-        }
-
-        function connectMQTT() {
-            const broker = document.getElementById('broker').value;
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-
-            if (!broker) {
-                alert('Please enter broker address!');
-                return;
-            }
-
-            addLog('Connecting to MQTT broker...', 'info');
-
-            try {
-                const url = new URL(broker);
-                const host = url.hostname;
-                const port = parseInt(url.port) || 9001;
-                const path = url.pathname || '/mqtt';
-                const clientId = 'web_' + Math.random().toString(16).substr(2, 8);
-
-                client = new Paho.MQTT.Client(host, port, path, clientId);
-                client.onConnectionLost = onConnectionLost;
-                client.onMessageArrived = onMessageArrived;
-
-                const options = {
-                    onSuccess: onConnect,
-                    onFailure: onFailure,
-                    userName: username,
-                    password: password,
-                    useSSL: url.protocol === 'wss:'
-                };
-
-                client.connect(options);
-            } catch (error) {
-                addLog('Connection error: ' + error.message, 'denied');
-                updateMQTTStatus(false);
-            }
-        }
-
-        function onConnect() {
-            isConnected = true;
-            updateMQTTStatus(true);
-            addLog('Connected to MQTT broker', 'granted');
-            
-            document.getElementById('connectBtn').disabled = true;
-            document.getElementById('disconnectBtn').disabled = false;
-
-            // Subscribe to topics
-            client.subscribe('rumah/status');
-            client.subscribe('rumah/suhu');
-            client.subscribe('rumah/knock');
-            client.subscribe('rumah/ac/status');
-            client.subscribe('rumah/door/status');
-            
-            addLog('Subscribed to all topics', 'info');
-            
-            // Request current AC state from ESP32
-            const syncMsg = new Paho.MQTT.Message('SYNC');
-            syncMsg.destinationName = 'c/5027241027/rumah/ac/command';
-            client.send(syncMsg);
-        }
-
-        function onFailure(error) {
-            updateMQTTStatus(false);
-            addLog('Connection failed: ' + error.errorMessage, 'denied');
-        }
-
-        function onConnectionLost(responseObject) {
-            if (responseObject.errorCode !== 0) {
-                isConnected = false;
-                updateMQTTStatus(false);
-                updateESPStatus(false);
-                addLog('Connection lost: ' + responseObject.errorMessage, 'denied');
-                
-                document.getElementById('connectBtn').disabled = false;
-                document.getElementById('disconnectBtn').disabled = true;
-                disableAllControls();
-            }
-        }
-
-        function onMessageArrived(message) {
-            const topic = message.destinationName;
-            const payload = message.payloadString;
-            
-            console.log('Message received:', topic, payload);
-            
-            try {
-                const data = JSON.parse(payload);
-                
-                if (topic === 'rumah/status') {
-                    handleStatusMessage(data);
-                } else if (topic === 'rumah/suhu') {
-                    handleTemperatureMessage(data);
-                } else if (topic === 'rumah/knock') {
-                    handleKnockMessage(data);
-                } else if (topic === 'rumah/ac/status') {
-                    handleACStatus(data);
-                } else if (topic === 'rumah/door/status') {
-                    handleDoorStatus(data);
-                }
-            } catch (e) {
-                console.error('Error parsing message:', e);
-            }
-        }
-
-        function handleStatusMessage(data) {
-            if (data.status === 'online') {
-                updateESPStatus(true);
-                addLog('ESP32 connected', 'granted');
-            }
-            
-            if (data.mode) {
-                updateModeStatus(data.mode);
-                
-                if (data.mode === 'recording') {
-                    showCountdown();
-                } else if (data.mode === 'pattern_saved') {
-                    hideCountdown();
-                    document.getElementById('listenBtn').disabled = false;
-                    addLog('Pattern saved successfully', 'granted');
-                } else if (data.mode === 'listening') {
-                    document.getElementById('stopBtn').disabled = false;
-                    document.getElementById('listenBtn').disabled = true;
-                }
-            }
-        }
-
-        function handleTemperatureMessage(data) {
-            document.getElementById('temperature').textContent = data.temperature.toFixed(1);
-            document.getElementById('humidity').textContent = data.humidity.toFixed(1);
-            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('id-ID');
-        }
-
-        function handleKnockMessage(data) {
-            if (data.pattern) {
-                const patternDiv = document.getElementById('patternDisplay');
-                const knocksDiv = document.getElementById('patternKnocks');
-                knocksDiv.innerHTML = '';
-                
-                for (let i = 0; i < data.count; i++) {
-                    const dot = document.createElement('div');
-                    dot.className = 'knock-dot';
-                    dot.textContent = i + 1;
-                    knocksDiv.appendChild(dot);
-                }
-                
-                document.getElementById('patternCount').textContent = data.count;
-                patternDiv.style.display = 'block';
-            }
-            
-            if (data.matched !== undefined) {
-                if (data.matched && data.action === 'open_door') {
-                    addLog('✅ Pattern matched! Door access GRANTED', 'granted');
-                    // Simulate door opening
-                    document.getElementById('doorIcon').textContent = '🔓';
-                    document.getElementById('doorStatus').textContent = 'UNLOCKED';
-                    setTimeout(() => {
-                        document.getElementById('doorIcon').textContent = '🔒';
-                        document.getElementById('doorStatus').textContent = 'LOCKED';
-                    }, 2000);
-                } else if (!data.matched && data.action === 'deny_access') {
-                    addLog('❌ Pattern mismatch! Door access DENIED', 'denied');
-                }
-            }
-        }
-
-        function handleACStatus(data) {
-            // Sync AC state from ESP32
-            if (data.unit === 1) {
-                ac1.power = data.power;
-                ac1.temp = data.temp;
-                updateACDisplay(1);
-            } else if (data.unit === 2) {
-                ac2.power = data.power;
-                ac2.temp = data.temp;
-                updateACDisplay(2);
-            }
-        }
-
-        function handleDoorStatus(data) {
-            const doorIcon = document.getElementById('doorIcon');
-            const doorStatus = document.getElementById('doorStatus');
-            
-            if (data.status === 'open') {
+            const topic = document.getElementById('doorTopic').value;
+            if (publishMQTT(topic, { action: 'open' })) {
                 doorIcon.textContent = '🔓';
                 doorStatus.textContent = 'UNLOCKED';
-            } else {
-                doorIcon.textContent = '🔒';
-                doorStatus.textContent = 'LOCKED';
-            }
-        }
-
-        function showCountdown() {
-            document.getElementById('countdownDisplay').style.display = 'block';
-            let count = 3;
-            document.getElementById('countdown').textContent = count;
-            
-            countdownInterval = setInterval(() => {
-                count--;
-                if (count > 0) {
-                    document.getElementById('countdown').textContent = count;
-                } else {
-                    hideCountdown();
-                }
-            }, 1000);
-        }
-
-        function hideCountdown() {
-            document.getElementById('countdownDisplay').style.display = 'none';
-            if (countdownInterval) {
-                clearInterval(countdownInterval);
-                countdownInterval = null;
-            }
-        }
-
-        function disconnectMQTT() {
-            if (client && isConnected) {
-                client.disconnect();
-                isConnected = false;
-                updateMQTTStatus(false);
-                updateESPStatus(false);
-                addLog('Disconnected by user', 'info');
+                doorBtn.disabled = true;
                 
-                document.getElementById('connectBtn').disabled = false;
-                document.getElementById('disconnectBtn').disabled = true;
-                disableAllControls();
+                addLog('✅ Door OPEN command sent', 'granted');
+                
+                setTimeout(() => {
+                    doorIcon.textContent = '🔒';
+                    doorStatus.textContent = 'LOCKED';
+                    if (mqttConnected && espOnline) {
+                        doorBtn.disabled = false;
+                    }
+                    
+                    publishMQTT(topic, { action: 'close' });
+                    addLog('✅ Door CLOSE command sent (auto)', 'info');
+                }, 3000);
             }
         }
 
         function recordPattern() {
-            if (!client || !isConnected) {
-                alert('Not connected to broker!');
-                return;
+            const topic = document.getElementById('knockTopic').value;
+            if (publishMQTT(topic, 'RECORD_PATTERN')) {
+                document.getElementById('modeStatus').textContent = '🔴 Recording...';
+                document.getElementById('modeStatus').className = 'status-badge status-recording';
+                addLog('✅ Record pattern command sent', 'info');
             }
-            
-            const message = new Paho.MQTT.Message('RECORD_PATTERN');
-            message.destinationName = 'c/5027241027/rumah/command';
-            client.send(message);
-            
-            addLog('Recording pattern command sent', 'info');
         }
 
         function startListening() {
-            if (!client || !isConnected) {
-                alert('Not connected to broker!');
-                return;
+            const topic = document.getElementById('knockTopic').value;
+            if (publishMQTT(topic, 'START_LISTENING')) {
+                document.getElementById('modeStatus').textContent = '👂 Listening...';
+                document.getElementById('modeStatus').className = 'status-badge status-listening';
+                document.getElementById('stopBtn').disabled = false;
+                document.getElementById('listenBtn').disabled = true;
+                addLog('✅ Start listening command sent', 'info');
             }
-            
-            const message = new Paho.MQTT.Message('START_LISTENING');
-            message.destinationName = 'c/5027241027/rumah/command';
-            client.send(message);
-            
-            addLog('Listening mode activated', 'info');
         }
 
         function stopListening() {
-            if (!client || !isConnected) {
-                alert('Not connected to broker!');
-                return;
+            const topic = document.getElementById('knockTopic').value;
+            if (publishMQTT(topic, 'STOP_LISTENING')) {
+                document.getElementById('modeStatus').textContent = 'Ready';
+                document.getElementById('modeStatus').className = 'status-badge status-offline';
+                document.getElementById('stopBtn').disabled = true;
+                document.getElementById('listenBtn').disabled = false;
+                addLog('✅ Stop listening command sent', 'info');
             }
-            
-            const message = new Paho.MQTT.Message('STOP_LISTENING');
-            message.destinationName = 'c/5027241027/rumah/command';
-            client.send(message);
-            
-            document.getElementById('stopBtn').disabled = true;
-            document.getElementById('listenBtn').disabled = false;
-            updateModeStatus('idle');
-            
-            addLog('Listening mode stopped', 'info');
         }
 
-        // Initialize AC displays
+        // Initialize displays
         updateACDisplay(1);
         updateACDisplay(2);
+        addLog('🏠 Smart Home Control System initialized', 'info');
+        addLog('Click "Connect to MQTT" to start', 'info');
     </script>
 </body>
 </html>
